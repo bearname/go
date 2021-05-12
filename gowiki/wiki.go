@@ -1,8 +1,8 @@
 package main
 
 import (
-	"awesomeProject/gowiki/controller"
 	"fmt"
+	"github.com/bearname/go/gowiki/controller"
 	"log"
 	"net/http"
 )
