@@ -1,2 +1,2 @@
 FrontPage
-Visit this page: [ANewPage] [TestPage] [Dud]
+Visit this page: <a href='/view/ANewPage'>ANewPage</a> <a href='/view/TestPage'>TestPage</a> <a href='/view/Dud'>Dud</a>

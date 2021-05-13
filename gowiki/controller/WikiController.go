@@ -14,6 +14,7 @@ type WikiController struct {
 }
 
 func (c WikiController) ViewHandler(writer http.ResponseWriter, request *http.Request, title string) {
+
 	p, err := c.loadPage(title)
 	if err != nil {
 		http.Redirect(writer, request, "/edit/"+title, http.StatusFound)
@@ -42,19 +43,25 @@ func (c WikiController) SaveHandler(writer http.ResponseWriter, request *http.Re
 }
 
 func (c WikiController) renderTemplate(writer http.ResponseWriter, tmpl string, page *m.Page) {
-	template, err := template.ParseFiles("template/" + tmpl + ".html")
-	c.tryInternalServerError(writer, err)
+	files, err := template.ParseFiles("template/" + tmpl + ".html")
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	err = template.Execute(writer, page)
+	err = files.Execute(writer, page)
 
-	c.tryInternalServerError(writer, err)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (c WikiController) loadPage(title string) (*m.Page, error) {
 	filename := "data/" + title + ".txt"
 	body, err := ioutil.ReadFile(filename)
 
-	search := regexp.MustCompile("\\[([a-zA-Z]+)\\]")
+	search := regexp.MustCompile("\\[([a-zA-Z]+)]")
 
 	body = search.ReplaceAllFunc(body, func(s []byte) []byte {
 		group := search.ReplaceAllString(string(s), `$1`)
