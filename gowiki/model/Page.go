@@ -8,6 +8,6 @@ type Page struct {
 }
 
 func (p *Page) Save() error {
-	filename := p.Title + ".txt"
+	filename := "data/" + p.Title + ".txt"
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }

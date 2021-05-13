@@ -1,32 +1,38 @@
 package main
 
 import (
+	"awesomeProject/gowiki/controller"
 	"fmt"
-	"github.com/bearname/go/gowiki/controller"
 	"log"
 	"net/http"
+	"regexp"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I lovae %s!", r.URL.Path[1:])
+var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+
+func defaultHandler(writer http.ResponseWriter, request *http.Request) {
+	http.Redirect(writer, request, "/edit/FrontPage", http.StatusFound)
+	fmt.Fprintf(writer, "Hi there, I lovae %s!", request.URL.Path[1:])
+}
+
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		validate := validPath.FindStringSubmatch(request.URL.Path)
+		if validate == nil {
+			http.NotFound(writer, request)
+		}
+
+		fn(writer, request, validate[2])
+	}
 }
 
 func main() {
 	{
 		wikiController := controller.WikiController{}
-		http.HandleFunc("/view/", wikiController.ViewHandler)
-		http.HandleFunc("/edit/", wikiController.EditHandler)
-		http.HandleFunc("/save/", wikiController.SaveHandler)
-		http.HandleFunc("/", handler)
+		http.HandleFunc("/view/", makeHandler(wikiController.ViewHandler))
+		http.HandleFunc("/edit/", makeHandler(wikiController.EditHandler))
+		http.HandleFunc("/save/", makeHandler(wikiController.SaveHandler))
+		http.HandleFunc("/", defaultHandler)
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	}
-	//{
-	//	page1 := &m.Page{Title: "TestPage", Body: []byte("This is a sample Page.")}
-	//	err := page1.Save()
-	//	if err != nil {
-	//		fmt.Println("Error" + err.Error())
-	//	}
-	//	p2, _ := loadPage("TestPage")
-	//	fmt.Println(string(p2.Body))
-	//}
 }
