@@ -2,10 +2,12 @@ package controller
 
 import (
 	m "awesomeProject/gowiki/model"
+	"fmt"
 	_ "fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 )
 
 type WikiController struct {
@@ -39,21 +41,35 @@ func (c WikiController) SaveHandler(writer http.ResponseWriter, request *http.Re
 	http.Redirect(writer, request, "/view/"+title, http.StatusFound)
 }
 
+func (c WikiController) renderTemplate(writer http.ResponseWriter, tmpl string, page *m.Page) {
+	template, err := template.ParseFiles("template/" + tmpl + ".html")
+	c.tryInternalServerError(writer, err)
+
+	err = template.Execute(writer, page)
+
+	c.tryInternalServerError(writer, err)
+}
+
 func (c WikiController) loadPage(title string) (*m.Page, error) {
 	filename := "data/" + title + ".txt"
 	body, err := ioutil.ReadFile(filename)
+
+	search := regexp.MustCompile("\\[([a-zA-Z]+)\\]")
+
+	body = search.ReplaceAllFunc(body, func(s []byte) []byte {
+		group := search.ReplaceAllString(string(s), `$1`)
+
+		fmt.Println(group)
+
+		newGroup := "<a href='/view/" + group + "'>" + group + "</a>"
+		return []byte(newGroup)
+	})
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(string(body))
 	return &m.Page{Title: title, Body: body}, nil
-}
-
-func (c WikiController) renderTemplate(w http.ResponseWriter, tmpl string, p *m.Page) {
-	t, err := template.ParseFiles("template/" + tmpl + ".html")
-	c.tryInternalServerError(w, err)
-	err = t.Execute(w, p)
-
-	c.tryInternalServerError(w, err)
 }
 
 func (c WikiController) tryInternalServerError(w http.ResponseWriter, err error) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 )
 
@@ -27,12 +28,15 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 }
 
 func main() {
-	{
-		wikiController := controller.WikiController{}
-		http.HandleFunc("/view/", makeHandler(wikiController.ViewHandler))
-		http.HandleFunc("/edit/", makeHandler(wikiController.EditHandler))
-		http.HandleFunc("/save/", makeHandler(wikiController.SaveHandler))
-		http.HandleFunc("/", defaultHandler)
-		log.Fatal(http.ListenAndServe(":8080", nil))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
+
+	wikiController := controller.WikiController{}
+	http.HandleFunc("/view/", makeHandler(wikiController.ViewHandler))
+	http.HandleFunc("/edit/", makeHandler(wikiController.EditHandler))
+	http.HandleFunc("/save/", makeHandler(wikiController.SaveHandler))
+	http.HandleFunc("/", defaultHandler)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
